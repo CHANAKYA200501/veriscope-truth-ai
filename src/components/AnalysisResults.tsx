@@ -1,6 +1,6 @@
 import { AnalysisResult } from "@/lib/analysis";
 import { cn } from "@/lib/utils";
-import { Shield, ShieldAlert, ShieldCheck, ShieldX, ExternalLink } from "lucide-react";
+import { Shield, ShieldAlert, ShieldCheck, ShieldX, ExternalLink, ArrowRight } from "lucide-react";
 
 interface AnalysisResultsProps {
   result: AnalysisResult;
@@ -19,7 +19,7 @@ const ScoreBar = ({ label, value, color }: { label: string; value: number; color
       <span className="text-muted-foreground">{label}</span>
       <span className={color}>{value}%</span>
     </div>
-    <div className="h-2 bg-secondary rounded-full overflow-hidden">
+    <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
       <div
         className={cn("h-full rounded-full transition-all duration-1000 ease-out", color.replace("text-", "bg-"))}
         style={{ width: `${value}%` }}
@@ -38,10 +38,10 @@ const AnalysisResults = ({ result }: AnalysisResultsProps) => {
   return (
     <div className="space-y-4 animate-fade-in-up">
       {/* Verdict Banner */}
-      <div className={cn("rounded-lg border p-5 flex items-center gap-4", verdict.bg, verdict.border)}>
-        <VerdictIcon className={cn("w-10 h-10", verdict.color)} />
+      <div className={cn("glass-card rounded-lg p-6 flex items-center gap-4", verdict.bg, verdict.border, "border")}>
+        <VerdictIcon className={cn("w-12 h-12", verdict.color)} />
         <div>
-          <div className={cn("text-lg font-bold font-mono tracking-wider", verdict.color)}>
+          <div className={cn("font-display text-2xl tracking-wider", verdict.color)}>
             {verdict.label}
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">{result.summary}</p>
@@ -50,16 +50,26 @@ const AnalysisResults = ({ result }: AnalysisResultsProps) => {
 
       {/* Scores */}
       <div className="grid grid-cols-2 gap-4">
-        <div className="rounded-lg border border-border bg-card p-4">
+        <div className="glass-card rounded-lg p-4">
           <ScoreBar label="CONFIDENCE" value={result.confidence} color={confidenceColor} />
         </div>
-        <div className="rounded-lg border border-border bg-card p-4">
+        <div className="glass-card rounded-lg p-4">
           <ScoreBar label="TRUST SCORE" value={result.trust_score} color={trustColor} />
         </div>
       </div>
 
+      {/* URL Prediction */}
+      {result.url_prediction && (
+        <div className={cn("glass-card rounded-lg p-4 border", result.url_prediction === "Real URL" ? "border-success/30" : "border-destructive/30")}>
+          <h3 className="text-xs font-mono text-muted-foreground tracking-wider mb-2">URL VERIFICATION</h3>
+          <span className={cn("font-display text-xl tracking-wider", result.url_prediction === "Real URL" ? "text-success" : "text-destructive")}>
+            {result.url_prediction}
+          </span>
+        </div>
+      )}
+
       {/* Detection Details */}
-      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      <div className="glass-card rounded-lg p-4 space-y-3">
         <h3 className="text-xs font-mono text-muted-foreground tracking-wider">DETECTION ANALYSIS</h3>
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="flex justify-between">
@@ -74,13 +84,15 @@ const AnalysisResults = ({ result }: AnalysisResultsProps) => {
           </div>
           <div className="flex justify-between">
             <span className="text-muted-foreground">Deepfake</span>
-            <span className={cn("font-mono", result.deepfake ? "text-destructive" : "text-success")}>
-              {result.deepfake ? "YES" : "NO"}
+            <span className={cn("font-mono", result.deepfake_detected ? "text-destructive" : "text-success")}>
+              {result.deepfake_detected ? "YES" : "NO"}
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-muted-foreground">Prediction</span>
-            <span className={cn("font-mono", verdict.color)}>{result.prediction}</span>
+            <span className="text-muted-foreground">Saved to DB</span>
+            <span className="font-mono text-success">
+              {result.database_saved ? "YES" : "NO"}
+            </span>
           </div>
         </div>
         <div className="pt-2 border-t border-border">
@@ -90,14 +102,11 @@ const AnalysisResults = ({ result }: AnalysisResultsProps) => {
 
       {/* Verified Sources */}
       {result.verified_sources.length > 0 && (
-        <div className="rounded-lg border border-border bg-card p-4 space-y-2">
+        <div className="glass-card rounded-lg p-4 space-y-2">
           <h3 className="text-xs font-mono text-muted-foreground tracking-wider">VERIFIED SOURCES</h3>
           <div className="flex flex-wrap gap-2">
             {result.verified_sources.map((source) => (
-              <span
-                key={source}
-                className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-success/10 text-success text-xs font-mono border border-success/20"
-              >
+              <span key={source} className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-success/10 text-success text-xs font-mono border border-success/20">
                 <ExternalLink className="w-3 h-3" />
                 {source}
               </span>
@@ -106,17 +115,30 @@ const AnalysisResults = ({ result }: AnalysisResultsProps) => {
         </div>
       )}
 
-      {/* Corrected Content */}
-      {result.corrected_title && (
-        <div className="rounded-lg border border-warning/30 bg-warning/5 p-4 space-y-2">
-          <h3 className="text-xs font-mono text-warning tracking-wider">CORRECTED INFORMATION</h3>
-          <p className="text-sm font-semibold text-foreground">{result.corrected_title}</p>
-          <p className="text-xs text-muted-foreground leading-relaxed">{result.corrected_content}</p>
+      {/* Fake News Comparison */}
+      {result.fake_news_detected && result.corrected_title && (
+        <div className="glass-card rounded-lg overflow-hidden border border-destructive/20">
+          <div className="p-4 bg-destructive/5 border-b border-destructive/20">
+            <h3 className="text-xs font-mono text-destructive tracking-wider">FAKE vs REAL — NEWS COMPARISON</h3>
+          </div>
+          <div className="grid md:grid-cols-2 divide-x divide-border">
+            <div className="p-4 space-y-2">
+              <span className="text-[10px] font-mono text-destructive tracking-wider">❌ DETECTED FAKE</span>
+              <p className="text-sm text-foreground font-medium">Original content flagged as {result.prediction.toLowerCase()}</p>
+              <p className="text-xs text-muted-foreground">{result.comparison_summary}</p>
+            </div>
+            <div className="p-4 space-y-2">
+              <span className="text-[10px] font-mono text-success tracking-wider">✅ CORRECTED REAL</span>
+              <p className="text-sm text-foreground font-medium">{result.corrected_title}</p>
+              <p className="text-xs text-muted-foreground">{result.corrected_description}</p>
+              <p className="text-[10px] font-mono text-primary mt-2">Source: {result.corrected_source}</p>
+            </div>
+          </div>
         </div>
       )}
 
       {/* Raw JSON */}
-      <details className="rounded-lg border border-border bg-card overflow-hidden">
+      <details className="glass-card rounded-lg overflow-hidden">
         <summary className="px-4 py-3 text-xs font-mono text-muted-foreground tracking-wider cursor-pointer hover:bg-secondary/50">
           RAW JSON OUTPUT
         </summary>

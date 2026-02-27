@@ -5,8 +5,11 @@ import { Button } from "@/components/ui/button";
 import AnalysisResults from "@/components/AnalysisResults";
 import ScanOverlay from "@/components/ScanOverlay";
 import { AnalysisResult, generateUrlResult } from "@/lib/analysis";
+import { Language } from "@/lib/i18n";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const UrlScanner = () => {
+  const [language, setLanguage] = useState<Language>("en");
   const [url, setUrl] = useState("");
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AnalysisResult | null>(null);
@@ -61,7 +64,7 @@ const UrlScanner = () => {
         </div>
       </div>
 
-      {result && <AnalysisResults result={result} />}
+      {result && <AnalysisResults result={result} language={language} />}
     </div>
   );
 };

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,26 +6,26 @@
 
 @layer base {
   :root {
-    --background: 220 20% 6%;
-    --foreground: 200 20% 90%;
+    --background: 0 0% 4%;
+    --foreground: 0 0% 92%;
 
-    --card: 220 18% 10%;
-    --card-foreground: 200 20% 90%;
+    --card: 0 0% 8%;
+    --card-foreground: 0 0% 92%;
 
-    --popover: 220 18% 10%;
-    --popover-foreground: 200 20% 90%;
+    --popover: 0 0% 8%;
+    --popover-foreground: 0 0% 92%;
 
-    --primary: 185 80% 45%;
-    --primary-foreground: 220 20% 6%;
+    --primary: 0 84% 50%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 15% 16%;
-    --secondary-foreground: 200 20% 80%;
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 80%;
 
-    --muted: 220 15% 14%;
-    --muted-foreground: 215 15% 50%;
+    --muted: 0 0% 14%;
+    --muted-foreground: 0 0% 50%;
 
-    --accent: 185 80% 45%;
-    --accent-foreground: 220 20% 6%;
+    --accent: 0 84% 50%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
@@ -36,22 +36,22 @@
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
 
-    --border: 220 15% 18%;
-    --input: 220 15% 18%;
-    --ring: 185 80% 45%;
+    --border: 0 0% 16%;
+    --input: 0 0% 16%;
+    --ring: 0 84% 50%;
 
     --radius: 0.5rem;
 
-    --sidebar-background: 220 18% 8%;
-    --sidebar-foreground: 200 20% 90%;
-    --sidebar-primary: 185 80% 45%;
-    --sidebar-primary-foreground: 220 20% 6%;
-    --sidebar-accent: 220 15% 14%;
-    --sidebar-accent-foreground: 200 20% 90%;
-    --sidebar-border: 220 15% 18%;
-    --sidebar-ring: 185 80% 45%;
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 0 0% 92%;
+    --sidebar-primary: 0 84% 50%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 12%;
+    --sidebar-accent-foreground: 0 0% 92%;
+    --sidebar-border: 0 0% 16%;
+    --sidebar-ring: 0 84% 50%;
 
-    --glow-primary: 0 0 20px hsl(185 80% 45% / 0.3);
+    --glow-primary: 0 0 20px hsl(0 84% 50% / 0.4);
     --glow-danger: 0 0 20px hsl(0 72% 51% / 0.3);
     --glow-success: 0 0 20px hsl(142 70% 45% / 0.3);
   }
@@ -63,12 +63,16 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans antialiased;
+    @apply bg-background text-foreground antialiased;
     font-family: 'Inter', sans-serif;
   }
 
   .font-mono {
     font-family: 'JetBrains Mono', monospace;
+  }
+
+  .font-display {
+    font-family: 'Bebas Neue', sans-serif;
   }
 }
 
@@ -87,18 +91,29 @@
 
   .text-gradient-primary {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(185 80% 45%), hsl(185 80% 65%));
+    background-image: linear-gradient(135deg, hsl(0 84% 50%), hsl(0 84% 65%));
   }
 
-  .border-glow {
-    border-color: hsl(185 80% 45% / 0.3);
+  .glass-card {
+    background: hsl(0 0% 8% / 0.6);
+    backdrop-filter: blur(16px);
+    border: 1px solid hsl(0 0% 16% / 0.8);
+  }
+
+  .glass-card-hover {
+    @apply glass-card transition-all duration-300;
+  }
+  .glass-card-hover:hover {
+    background: hsl(0 0% 10% / 0.8);
+    border-color: hsl(0 84% 50% / 0.3);
+    box-shadow: 0 0 30px hsl(0 84% 50% / 0.1);
   }
 
   .scan-line {
     background: linear-gradient(
       180deg,
       transparent 0%,
-      hsl(185 80% 45% / 0.08) 50%,
+      hsl(0 84% 50% / 0.1) 50%,
       transparent 100%
     );
     animation: scanDown 2s ease-in-out infinite;
@@ -110,8 +125,8 @@
   }
 
   @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 8px hsl(185 80% 45% / 0.3); }
-    50% { box-shadow: 0 0 24px hsl(185 80% 45% / 0.6); }
+    0%, 100% { box-shadow: 0 0 8px hsl(0 84% 50% / 0.3); }
+    50% { box-shadow: 0 0 30px hsl(0 84% 50% / 0.6); }
   }
 
   .animate-pulse-glow {
@@ -127,10 +142,18 @@
     animation: fadeInUp 0.5s ease-out forwards;
   }
 
-  .grid-bg {
-    background-image:
-      linear-gradient(hsl(220 15% 18% / 0.5) 1px, transparent 1px),
-      linear-gradient(90deg, hsl(220 15% 18% / 0.5) 1px, transparent 1px);
-    background-size: 40px 40px;
+  @keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  .animate-shimmer {
+    background: linear-gradient(90deg, transparent 0%, hsl(0 84% 50% / 0.1) 50%, transparent 100%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  .netflix-gradient {
+    background: linear-gradient(180deg, transparent 0%, hsl(0 0% 4%) 100%);
   }
 }

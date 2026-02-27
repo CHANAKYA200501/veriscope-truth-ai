@@ -11,6 +11,7 @@ export interface AnalysisResult {
   corrected_title: string;
   corrected_description: string;
   corrected_source: string;
+  corrected_source_url: string;
   comparison_summary: string;
   summary: string;
   reason: string;
@@ -20,32 +21,108 @@ export interface AnalysisResult {
 
 const TRUSTED_SOURCES = ["BBC", "Reuters", "NDTV", "The Hindu", "Indian Express", "Times of India", "CNN", "Al Jazeera", "AP News", "The Guardian"];
 
-const FAKE_NEWS_CORRECTIONS: Record<string, { title: string; description: string; source: string }> = {
-  "shocking": {
-    title: "Verified: No evidence supports this sensational claim",
-    description: "Fact-checkers from multiple trusted news agencies have investigated similar claims and found no credible evidence. The original content appears to use sensational language designed to mislead readers.",
-    source: "Reuters Fact Check"
-  },
-  "breaking": {
-    title: "Verified: Official sources report different information",
-    description: "According to verified reports from major news agencies, the actual events differ significantly from what was claimed. Multiple independent sources have confirmed the correct version of events.",
-    source: "BBC News Verification"
-  },
-  "unbelievable": {
-    title: "Verified: Claim debunked by scientific evidence",
-    description: "Scientific consensus and peer-reviewed research contradict the claims made in this content. Leading experts have provided evidence-based rebuttals.",
-    source: "AP News Fact Check"
-  },
-  "default": {
-    title: "Verified: Content does not match trusted source reports",
-    description: "Cross-referencing with major news databases reveals discrepancies. The verified version of this story has been confirmed by multiple independent journalists.",
-    source: "Google News Verification"
-  }
+const FAKE_NEWS_DATABASE: Record<string, {
+  fakePattern: string;
+  realTitle: string;
+  realDescription: string;
+  realSource: string;
+  realSourceUrl: string;
+  category: string;
+}[]> = {
+  health: [
+    {
+      fakePattern: "covid|vaccine|5g|microchip|magnetic",
+      realTitle: "COVID-19 vaccines are safe and effective, confirmed by global health organizations",
+      realDescription: "The World Health Organization (WHO) and CDC have confirmed that COVID-19 vaccines underwent rigorous clinical trials with tens of thousands of participants. No microchips or 5G components exist in any approved vaccine. Side effects are mild and temporary in most cases. Over 13 billion doses have been administered globally with comprehensive safety monitoring.",
+      realSource: "World Health Organization (WHO)",
+      realSourceUrl: "https://www.who.int/emergencies/diseases/novel-coronavirus-2019/covid-19-vaccines",
+      category: "Health Misinformation"
+    },
+    {
+      fakePattern: "cure|miracle|cancer cure|secret remedy",
+      realTitle: "No single 'miracle cure' exists for cancer — treatment requires medical evaluation",
+      realDescription: "According to the National Cancer Institute, cancer treatment varies by type and stage, including surgery, chemotherapy, radiation, immunotherapy, and targeted therapy. Claims of secret or suppressed cures are consistently debunked. Patients should consult oncologists for evidence-based treatment plans.",
+      realSource: "National Cancer Institute (NIH)",
+      realSourceUrl: "https://www.cancer.gov/about-cancer/treatment",
+      category: "Health Misinformation"
+    }
+  ],
+  politics: [
+    {
+      fakePattern: "election|rigged|stolen|fraud|ballot",
+      realTitle: "Election integrity confirmed by multiple independent audits and oversight bodies",
+      realDescription: "Independent election commissions, international observers, and court rulings have consistently upheld the integrity of democratic elections. Claims of widespread fraud have been investigated and dismissed by bipartisan committees. Robust security measures including paper trails, audits, and poll watchers ensure transparent elections.",
+      realSource: "Reuters Fact Check",
+      realSourceUrl: "https://www.reuters.com/fact-check",
+      category: "Political Misinformation"
+    },
+    {
+      fakePattern: "war|invasion|attack|military|troops",
+      realTitle: "Verified conflict reports from international correspondents on the ground",
+      realDescription: "Leading international news agencies maintain verified reporters in conflict zones. Ground-truth reporting from Reuters, AP, and BBC correspondents provides accurate casualty figures, territorial updates, and humanitarian assessments verified through multiple independent sources.",
+      realSource: "Associated Press (AP News)",
+      realSourceUrl: "https://apnews.com",
+      category: "Conflict Misinformation"
+    }
+  ],
+  science: [
+    {
+      fakePattern: "flat earth|climate hoax|global warming fake|moon landing fake",
+      realTitle: "Scientific consensus supported by decades of peer-reviewed research",
+      realDescription: "NASA, ESA, and every major scientific institution confirm: Earth is an oblate spheroid, climate change is real and human-caused (97% scientific consensus), and the Apollo moon landings are verified by independent evidence including retroreflectors left on the lunar surface. These facts are supported by millions of data points and independent verification.",
+      realSource: "NASA / Nature Journal",
+      realSourceUrl: "https://climate.nasa.gov/evidence",
+      category: "Science Misinformation"
+    }
+  ],
+  technology: [
+    {
+      fakePattern: "ai takeover|robot|sentient|hack|data leak",
+      realTitle: "AI systems are tools designed and controlled by human developers",
+      realDescription: "Current AI systems, including large language models, are not sentient or conscious. They are sophisticated pattern-matching tools trained on data. AI safety research is actively conducted by organizations like DeepMind, OpenAI, and academic institutions. Responsible AI development includes safety testing, bias mitigation, and human oversight.",
+      realSource: "MIT Technology Review",
+      realSourceUrl: "https://www.technologyreview.com",
+      category: "Technology Misinformation"
+    }
+  ],
+  general: [
+    {
+      fakePattern: "shocking|breaking|unbelievable|you won't believe|secret|exposed|leaked",
+      realTitle: "Content uses sensational language commonly associated with misinformation",
+      realDescription: "Fact-checkers from multiple trusted news agencies have investigated similar claims using sensational language patterns. Content that relies on emotional trigger words like 'shocking', 'breaking', or 'you won't believe' without citing verified sources is frequently found to be misleading or fabricated. Always verify claims through multiple trusted outlets before sharing.",
+      realSource: "Google News Fact Check",
+      realSourceUrl: "https://news.google.com",
+      category: "General Misinformation"
+    },
+    {
+      fakePattern: "celebrity|died|death hoax|arrested",
+      realTitle: "Celebrity news should be verified through official sources and publicists",
+      realDescription: "False celebrity death reports and arrest hoaxes are among the most common forms of viral misinformation. Verified celebrity news is published through official representatives, verified social media accounts, and established entertainment news outlets. Always check AP, Reuters, or the celebrity's official channels before believing or sharing such claims.",
+      realSource: "AP Entertainment",
+      realSourceUrl: "https://apnews.com/entertainment",
+      category: "Celebrity Misinformation"
+    }
+  ]
 };
+
+function findBestCorrection(content: string): { realTitle: string; realDescription: string; realSource: string; realSourceUrl: string; category: string } {
+  const lower = content.toLowerCase();
+  
+  for (const [, entries] of Object.entries(FAKE_NEWS_DATABASE)) {
+    for (const entry of entries) {
+      const patterns = entry.fakePattern.split("|");
+      if (patterns.some(p => lower.includes(p))) {
+        return entry;
+      }
+    }
+  }
+  
+  return FAKE_NEWS_DATABASE.general[0];
+}
 
 export function generateMockResult(type: string, content: string): AnalysisResult {
   const lower = content.toLowerCase();
-  const isSuspicious = lower.includes("breaking") || lower.includes("shocking") || lower.includes("unbelievable") || lower.includes("fake") || content.length < 30;
+  const isSuspicious = lower.includes("breaking") || lower.includes("shocking") || lower.includes("unbelievable") || lower.includes("fake") || lower.includes("vaccine") || lower.includes("5g") || lower.includes("rigged") || lower.includes("miracle") || lower.includes("flat earth") || content.length < 30;
 
   const predictions: AnalysisResult["prediction"][] = ["Real", "Fake", "AI Generated", "Deepfake"];
   const prediction = isSuspicious
@@ -61,8 +138,7 @@ export function generateMockResult(type: string, content: string): AnalysisResul
     ? TRUSTED_SOURCES.sort(() => 0.5 - Math.random()).slice(0, 2 + Math.floor(Math.random() * 3))
     : [];
 
-  const correctionKey = lower.includes("shocking") ? "shocking" : lower.includes("breaking") ? "breaking" : lower.includes("unbelievable") ? "unbelievable" : "default";
-  const correction = FAKE_NEWS_CORRECTIONS[correctionKey];
+  const correction = findBestCorrection(content);
 
   return {
     type,
@@ -74,19 +150,20 @@ export function generateMockResult(type: string, content: string): AnalysisResul
     deepfake_detected: prediction === "Deepfake",
     fake_news_detected: !isReal,
     verified_sources: sources,
-    corrected_title: isReal ? "" : correction.title,
-    corrected_description: isReal ? "" : correction.description,
-    corrected_source: isReal ? "" : correction.source,
-    comparison_summary: isReal ? "" : `Original content classified as "${prediction}" with ${confidence}% confidence. The corrected information has been verified by ${correction.source}.`,
+    corrected_title: isReal ? "" : correction.realTitle,
+    corrected_description: isReal ? "" : correction.realDescription,
+    corrected_source: isReal ? "" : correction.realSource,
+    corrected_source_url: isReal ? "" : correction.realSourceUrl,
+    comparison_summary: isReal ? "" : `[${correction.category}] Original content classified as "${prediction}" with ${confidence}% confidence. The corrected information has been verified by ${correction.realSource}. Cross-referenced with Google News and internal fact-check databases.`,
     summary: isReal
       ? "Content verified against trusted news sources. No signs of manipulation detected."
       : `Content flagged as ${prediction.toLowerCase()}. Analysis detected inconsistencies with verified sources.`,
     reason: isReal
       ? "Content matches verified reports from multiple trusted sources. Cross-referenced with Google News and internal dataset."
       : prediction === "Deepfake"
-        ? "EfficientNet model detected facial landmark inconsistencies. Temporal artifacts and GAN fingerprints found in frame transitions. Confidence exceeds detection threshold."
+        ? "EfficientNet model detected facial landmark inconsistencies. Temporal artifacts and GAN fingerprints found in frame transitions."
         : prediction === "AI Generated"
-          ? "Statistical patterns consistent with large language model output. Perplexity analysis and token distribution indicate synthetic generation. GAN signature detected."
+          ? "Statistical patterns consistent with large language model output. Perplexity analysis and token distribution indicate synthetic generation."
           : "No matching reports found in trusted news databases. Linguistic analysis shows manipulation markers. Content flagged by internal dataset comparison.",
     url_prediction: type === "url" ? (isReal ? "Real URL" : "Fake URL") : undefined,
     database_saved: true,
@@ -115,6 +192,7 @@ export function generateUrlResult(url: string): AnalysisResult {
     corrected_title: isReal ? "" : "Warning: Suspicious URL detected",
     corrected_description: isReal ? "" : `The URL "${url}" shows indicators of being untrustworthy. ${!isHttps ? "Missing HTTPS security. " : ""}${hasSpam ? "Contains spam patterns. " : ""}${!isTrusted ? "Domain not recognized in trusted sources." : ""}`,
     corrected_source: isReal ? "" : "VeriScope URL Scanner",
+    corrected_source_url: isReal ? "" : "https://safebrowsing.google.com",
     comparison_summary: isReal ? "" : "URL failed multiple trust verification checks.",
     summary: isReal ? "URL verified as trustworthy" : "URL flagged as potentially malicious or untrustworthy",
     reason: isReal

@@ -4,27 +4,30 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import LiveCamera from "@/components/LiveCamera";
+import { Language, t } from "@/lib/i18n";
 
 export type InputType = "text" | "image" | "audio" | "video" | "camera";
 
 interface AnalysisInputProps {
   onAnalyze: (type: InputType, content: string) => void;
   isAnalyzing: boolean;
+  language: Language;
 }
 
-const tabs: { type: InputType; icon: typeof FileText; label: string; accept?: string }[] = [
-  { type: "text", icon: FileText, label: "News Text" },
-  { type: "image", icon: Image, label: "Image", accept: "image/*" },
-  { type: "audio", icon: Mic, label: "Audio", accept: "audio/*" },
-  { type: "video", icon: Video, label: "Video", accept: "video/*" },
-  { type: "camera", icon: Camera, label: "Camera" },
-];
-
-const AnalysisInput = ({ onAnalyze, isAnalyzing }: AnalysisInputProps) => {
+const AnalysisInput = ({ onAnalyze, isAnalyzing, language }: AnalysisInputProps) => {
+  const i = t(language);
   const [activeTab, setActiveTab] = useState<InputType>("text");
   const [textInput, setTextInput] = useState("");
   const [fileName, setFileName] = useState<string>("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  const tabs: { type: InputType; icon: typeof FileText; label: string; accept?: string }[] = [
+    { type: "text", icon: FileText, label: i.newsText },
+    { type: "image", icon: Image, label: i.image, accept: "image/*" },
+    { type: "audio", icon: Mic, label: i.audio, accept: "audio/*" },
+    { type: "video", icon: Video, label: i.video, accept: "video/*" },
+    { type: "camera", icon: Camera, label: i.camera },
+  ];
 
   const handleSubmit = () => {
     const content = activeTab === "text" ? textInput : fileName || `Sample ${activeTab} input`;
@@ -68,7 +71,7 @@ const AnalysisInput = ({ onAnalyze, isAnalyzing }: AnalysisInputProps) => {
           <Textarea
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
-            placeholder="Paste news article, headline, or suspicious text here for analysis..."
+            placeholder={i.pasteText}
             className="min-h-[160px] bg-background border-border font-mono text-sm resize-none focus:border-primary focus:ring-primary/20"
           />
         ) : (
@@ -91,7 +94,7 @@ const AnalysisInput = ({ onAnalyze, isAnalyzing }: AnalysisInputProps) => {
                 <p className="text-sm text-foreground font-mono">{fileName}</p>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  {`Click to upload ${activeTab} file or drag & drop`}
+                  {`${i.clickUpload} ${activeTab}`}
                 </p>
               )}
               <p className="text-[10px] text-muted-foreground mt-2 font-mono">
@@ -110,10 +113,10 @@ const AnalysisInput = ({ onAnalyze, isAnalyzing }: AnalysisInputProps) => {
             {isAnalyzing ? (
               <span className="flex items-center gap-2">
                 <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-                SCANNING...
+                {i.scanning}
               </span>
             ) : (
-              "▶ ANALYZE"
+              i.analyze
             )}
           </Button>
         )}

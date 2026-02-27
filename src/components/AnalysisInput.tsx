@@ -2,8 +2,8 @@ import { useState, useRef } from "react";
 import { FileText, Image, Mic, Video, Camera, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import LiveCamera from "@/components/LiveCamera";
 
 export type InputType = "text" | "image" | "audio" | "video" | "camera";
 
@@ -62,7 +62,9 @@ const AnalysisInput = ({ onAnalyze, isAnalyzing }: AnalysisInputProps) => {
 
       {/* Input Area */}
       <div className="p-5">
-        {activeTab === "text" ? (
+        {activeTab === "camera" ? (
+          <LiveCamera />
+        ) : activeTab === "text" ? (
           <Textarea
             value={textInput}
             onChange={(e) => setTextInput(e.target.value)}
@@ -72,7 +74,7 @@ const AnalysisInput = ({ onAnalyze, isAnalyzing }: AnalysisInputProps) => {
         ) : (
           <div
             className="flex flex-col items-center justify-center min-h-[160px] border-2 border-dashed border-border rounded-lg bg-background/50 hover:border-primary/50 transition-colors cursor-pointer"
-            onClick={() => activeTab !== "camera" && fileRef.current?.click()}
+            onClick={() => fileRef.current?.click()}
           >
             <input
               ref={fileRef}
@@ -89,32 +91,32 @@ const AnalysisInput = ({ onAnalyze, isAnalyzing }: AnalysisInputProps) => {
                 <p className="text-sm text-foreground font-mono">{fileName}</p>
               ) : (
                 <p className="text-sm text-muted-foreground">
-                  {activeTab === "camera"
-                    ? "Capture a frame from your camera for analysis"
-                    : `Click to upload ${activeTab} file or drag & drop`}
+                  {`Click to upload ${activeTab} file or drag & drop`}
                 </p>
               )}
               <p className="text-[10px] text-muted-foreground mt-2 font-mono">
-                {activeTab === "image" ? "PNG, JPG, WEBP" : activeTab === "audio" ? "MP3, WAV, M4A" : activeTab === "video" ? "MP4, WEBM, AVI" : "LIVE CAPTURE"}
+                {activeTab === "image" ? "PNG, JPG, WEBP" : activeTab === "audio" ? "MP3, WAV, M4A" : "MP4, WEBM, AVI"}
               </p>
             </div>
           </div>
         )}
 
-        <Button
-          onClick={handleSubmit}
-          disabled={isAnalyzing || (activeTab === "text" ? !textInput.trim() : false)}
-          className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold tracking-wide animate-pulse-glow disabled:animate-none py-6 text-base"
-        >
-          {isAnalyzing ? (
-            <span className="flex items-center gap-2">
-              <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
-              SCANNING...
-            </span>
-          ) : (
-            "▶ ANALYZE"
-          )}
-        </Button>
+        {activeTab !== "camera" && (
+          <Button
+            onClick={handleSubmit}
+            disabled={isAnalyzing || (activeTab === "text" ? !textInput.trim() : false)}
+            className="w-full mt-4 bg-primary text-primary-foreground hover:bg-primary/90 font-semibold tracking-wide animate-pulse-glow disabled:animate-none py-6 text-base"
+          >
+            {isAnalyzing ? (
+              <span className="flex items-center gap-2">
+                <span className="w-5 h-5 border-2 border-primary-foreground/30 border-t-primary-foreground rounded-full animate-spin" />
+                SCANNING...
+              </span>
+            ) : (
+              "▶ ANALYZE"
+            )}
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -202,3 +202,55 @@ export function generateUrlResult(url: string): AnalysisResult {
     database_saved: true,
   };
 }
+
+// ===============================
+// BACKEND INTEGRATION FUNCTION
+// ===============================
+
+export async function analyzeUrl(url: string): Promise<AnalysisResult> {
+
+  try {
+
+    const response = await fetch(
+      "http://localhost:5000/api/analysis/url",
+      {
+
+        method: "POST",
+
+        headers: {
+          "Content-Type": "application/json"
+        },
+
+        body: JSON.stringify({ url })
+
+      }
+    );
+
+
+    if (!response.ok) {
+
+      throw new Error("Backend failed");
+
+    }
+
+
+    const data = await response.json();
+
+
+    // Return backend result
+
+    return data as AnalysisResult;
+
+
+  } catch (error) {
+
+    console.log("Backend not running, using mock result");
+
+
+    // fallback to your existing mock function
+
+    return generateUrlResult(url);
+
+  }
+
+}
